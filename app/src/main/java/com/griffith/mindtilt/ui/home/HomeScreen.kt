@@ -3,6 +3,7 @@
 
 package com.griffith.mindtilt.ui.home
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -23,8 +24,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat.startActivity
 import com.griffith.mindtilt.ui.theme.MindTiltTheme
 
 class HomeScreen : ComponentActivity() {
@@ -96,6 +99,24 @@ fun HomeScreenContent(username: String, onStartSession: () -> Unit, onHistory: (
                 OutlinedButton(onClick = onHistory) { Text("History") }
                 OutlinedButton(onClick = onSettings) { Text("Settings") }
             }
+            Spacer(modifier = Modifier.height(16.dp))
+            // Save the current context
+            val context = LocalContext.current
+            // Implicit intent to share progress (This will be moved in later milestone to be displayed after user finishes a session)
+            Button(
+                onClick = {
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_SUBJECT, "MindTilt Meditation")
+                        putExtra(Intent.EXTRA_TEXT, "I just finished a meditation session with MindTilt")
+                    }
+                    context.startActivity(Intent.createChooser(shareIntent, "Share via"))
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Share Progress")
+            }
+
         }
     }
 }
