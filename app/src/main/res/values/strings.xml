@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">MindTilt</string>
+    <string name="title_activity_welcome_screen">WelcomeScreen</string>
+    <string name="title_activity_summary_screen">SummaryScreen</string>
+    <string name="title_activity_benefits_screen">BenefitsScreen</string>
+    <string name="title_activity_home_screen">HomeScreen</string>
+    <string name="title_activity_history_screen">HistoryScreen</string>
+</resources>
