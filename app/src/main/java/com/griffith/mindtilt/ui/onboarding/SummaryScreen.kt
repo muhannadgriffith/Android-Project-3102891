@@ -89,7 +89,7 @@ fun SummaryScreenContent(username:String, onFinishClick: () -> Unit) {
 
             // Final encouragement to motivate the user
             Text(
-                text = "Here is what you can expect after a few sessions:",
+                text = "What our users experience after a few sessions:",
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onBackground
             )
