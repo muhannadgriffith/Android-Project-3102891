@@ -32,33 +32,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.griffith.mindtilt.ui.theme.MindTiltTheme
 
-
-class BenefitsScreen : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        // Get the username from Intent passed from previous screen
-        val username = intent.getStringExtra("username") ?: ""
-        setContent {
-            MindTiltTheme {
-                // Pass the username to the composable
-                BenefitsScreenContent(
-                    username,
-                    onNextClick ={
-                        // Navigate to SummaryScreen (onboarding screen 3) and pass username
-                        val intent = Intent(this, SummaryScreen::class.java)
-                        intent.putExtra("username", username)
-                        startActivity(intent)
-                        finish()
-                    }
-                )
-            }
-        }
-    }
-}
-
 @Composable
-fun BenefitsScreenContent(username: String, onNextClick: () -> Unit) {
+fun BenefitsScreen(username: String, onNextClick: () -> Unit) {
     // Create list of pairs(to iterate later and retrieve title and description)
     val benefits = listOf(
         "Reduced Stress" to "Short daily sessions help you feel calmer and less stressed",

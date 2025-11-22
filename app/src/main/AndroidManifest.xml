@@ -12,6 +12,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MindTilt">
         <activity
+            android:name=".ui.navigation.test"
+            android:exported="false"
+            android:label="@string/title_activity_test"
+            android:theme="@style/Theme.MindTilt" />
+        <activity
+            android:name=".ui.navigation.MainActivityjj"
+            android:exported="false" />
+        <activity
             android:name=".ui.history.HistoryScreen"
             android:exported="false"
             android:label="@string/title_activity_history_screen"

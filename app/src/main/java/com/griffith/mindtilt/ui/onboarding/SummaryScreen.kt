@@ -36,29 +36,9 @@ import androidx.compose.ui.unit.sp
 import com.griffith.mindtilt.ui.home.HomeScreen
 import com.griffith.mindtilt.ui.theme.MindTiltTheme
 
-class SummaryScreen : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        // Get the username from Intent passed from previous screen
-        val username = intent.getStringExtra("username") ?: ""
-        setContent {
-            MindTiltTheme {
-                // Pass username and lambda to composable
-                SummaryScreenContent(username) {
-                    // Navigate to HomeScreen on button click and pass username
-                    val intent = Intent(this, HomeScreen::class.java)
-                    intent.putExtra("username", username)
-                    startActivity(intent)
-                    finish()
-                }
-            }
-        }
-    }
-}
 
 @Composable
-fun SummaryScreenContent(username:String, onFinishClick: () -> Unit) {
+fun SummaryScreen(username:String, onFinishClick: () -> Unit) {
     // Using scaffold to handle edge to edge padding
     Scaffold { innerPadding ->
         Column(

@@ -33,26 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.griffith.mindtilt.ui.theme.MindTiltTheme
 
-class WelcomeScreen : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            MindTiltTheme {
-                // Pass username to next screen when next button is clicked
-                WelcomeScreenContent { name ->
-                    val intent = Intent(this, BenefitsScreen::class.java)
-                    intent.putExtra("username", name)
-                    startActivity(intent) // Start next screen
-                    finish()
-                }
-            }
-        }
-    }
-}
-
 @Composable
-fun WelcomeScreenContent(onNextClick: (String) -> Unit) {
+fun WelcomeScreen(onNextClick: (String) -> Unit) {
     var name by rememberSaveable { mutableStateOf("") }
     // Using scaffold to handle edge to edge padding
     Scaffold { innerPadding ->
