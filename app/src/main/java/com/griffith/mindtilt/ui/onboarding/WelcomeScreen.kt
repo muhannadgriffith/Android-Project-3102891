@@ -3,6 +3,8 @@
 
 package com.griffith.mindtilt.ui.onboarding
 
+import android.R.attr.singleLine
+import android.R.attr.top
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -36,6 +38,7 @@ import com.griffith.mindtilt.ui.theme.MindTiltTheme
 @Composable
 fun WelcomeScreen(onNextClick: (String) -> Unit) {
     var name by rememberSaveable { mutableStateOf("") }
+    var error by rememberSaveable { mutableStateOf(false) }
     // Using scaffold to handle edge to edge padding
     Scaffold { innerPadding ->
         Column(
@@ -67,16 +70,37 @@ fun WelcomeScreen(onNextClick: (String) -> Unit) {
             // Input field for username
             OutlinedTextField(
                 value = name,
-                onValueChange = { name = it },
+                // Always capitalize first letter
+                onValueChange = {
+                    name = it.replaceFirstChar { c ->
+                        c.uppercase()
+                    }
+                    error = false // Reset error state
+                },
                 label = { Text("Enter your name") },
+                isError = error,
                 singleLine = true
 
             )
+            // Show error message if name is invalid (2-10 letters only)
+            if (error) {
+                Text(
+                    text = "Name must be 2-10 letters",
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
             Spacer(modifier = Modifier.height(24.dp))
 
             // Next button navigates to BenefitsScreen (onboarding screen 2)
             Button(
-                onClick = { onNextClick(name) },
+                onClick = {
+                    if(isValidName(name)) {
+                        onNextClick(name)
+                    } else {
+                        error = true
+                    }
+                },
                 modifier = Modifier.padding(top = 24.dp)
             ) {
                 Text("Next")
@@ -84,4 +108,11 @@ fun WelcomeScreen(onNextClick: (String) -> Unit) {
         }
     }
 
+}
+
+// Boolean helper function to validate name
+fun isValidName(input: String): Boolean {
+    // Name must be between 2-10 letters
+    val regex = "^[A-Za-z\\s]{2,10}$".toRegex()
+    return input.trim().matches(regex)
 }

@@ -25,9 +25,8 @@ fun AppNavHost(
     navController: NavHostController,
     startDestination: String = "welcome"
 ) {
-    //
-    // AnimatedNavHost container that manages navigation between composables
-    // and supports animated transitions
+    // AnimatedNavHost container to manage navigation between composables
+    // and animated transitions
     AnimatedNavHost(
         navController = navController,
         startDestination = startDestination
