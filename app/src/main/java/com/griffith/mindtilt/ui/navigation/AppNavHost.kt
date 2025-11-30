@@ -11,10 +11,9 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.navigation.animation.AnimatedNavHost
-import com.griffith.mindtilt.ui.home.HomeScreen
 import com.griffith.mindtilt.ui.onboarding.BenefitsScreen
 import com.griffith.mindtilt.ui.onboarding.SummaryScreen
 import com.griffith.mindtilt.ui.onboarding.WelcomeScreen
@@ -71,28 +70,22 @@ fun AppNavHost(
             // Pass username to the UI and a lambda to handle "finish" button
             SummaryScreen(username) {
                 // Navigate to Home screen with the username
-                navController.navigate("home/$username") {
+                navController.navigate("main/$username") {
                     // Clear back stack so onboarding screens are removed
                     popUpTo("welcome") { inclusive = true }
                 }
             }
         }
 
-        // Main home screen after onboarding
+        // MainScreen after onboarding
         composable(
-            "home/{username}",
+            "main/{username}",
             enterTransition = { fadeIn(animationSpec = tween(durationMillis = 600)) },
             exitTransition = { fadeOut(animationSpec = tween(durationMillis = 600)) }
         ) { backStackEntry ->
             val username = backStackEntry.arguments?.getString("username") ?: ""
-            // Pass callback lambdas for buttons
-            HomeScreen(
-                username = username,
-                onStartSession = { },
-                onHistory = { navController.navigate("history") },
-                onSettings = { }
-            )
-
+            val bottomNavController = rememberNavController()
+            MainScreenNavHost(username, bottomNavController)
         }
     }
 }
