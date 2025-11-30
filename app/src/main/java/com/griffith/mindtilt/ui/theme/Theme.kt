@@ -8,6 +8,9 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
@@ -35,7 +38,30 @@ private val LightColorScheme = lightColorScheme(
     error = md_theme_light_error,
     onError = md_theme_light_onError
 )
+// Container for gradients
+data class AppGradients(
+    val primary: List<Color>
+)
+// CompositionLocal, to make gradients available globally
+val LocalGradients = staticCompositionLocalOf<AppGradients> {
+    error("No gradients provided") // Fallback if no provider exists
+}
 
+private val LightGradients = AppGradients(
+    primary = listOf(
+        gradient_light_start,
+        gradient_light_middle,
+        gradient_light_end
+    )
+)
+
+private val DarkGradients = AppGradients(
+    primary = listOf(
+        gradient_dark_start,
+        gradient_dark_middle,
+        gradient_dark_end
+    )
+)
 @Composable
 fun MindTiltTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -52,10 +78,14 @@ fun MindTiltTheme(
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
-
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+// CompositionLocalProvider to inject values into composable tree
+    CompositionLocalProvider(
+        LocalGradients provides(if (darkTheme) DarkGradients else LightGradients)
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content
+        )
+    }
 }
