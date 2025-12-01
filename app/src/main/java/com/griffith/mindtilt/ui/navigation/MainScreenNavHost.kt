@@ -4,6 +4,9 @@
 package com.griffith.mindtilt.ui.navigation
 
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
@@ -19,6 +22,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.griffith.mindtilt.ui.history.HistoryScreen
 import com.griffith.mindtilt.ui.home.HomeScreen
+import com.griffith.mindtilt.ui.sessions.SessionScreen
 import com.griffith.mindtilt.ui.settings.SettingsScreen
 
 // Hosts the main bottom navigation and switches between home, history, and settings screens
@@ -63,9 +67,7 @@ fun MainScreenNavHost(username: String, navController: NavHostController) {
             composable("home") {
                 HomeScreen(
                     username = username,
-                    onStartSession = {},
-                    onHistory = { navController.navigate("history") },
-                    onSettings = { navController.navigate("settings") }
+                    navController = navController
                 )
             }
 
@@ -75,6 +77,18 @@ fun MainScreenNavHost(username: String, navController: NavHostController) {
 
             composable("settings") {
                 SettingsScreen()
+            }
+
+            // SessionScreen
+            composable(
+                "session/{mood}",
+                enterTransition = { fadeIn(animationSpec = tween(500)) },
+                exitTransition = { fadeOut(animationSpec = tween(500)) }
+            ) { backStackEntry ->
+                val mood = backStackEntry.arguments?.getString("mood") ?: "Calm"
+                SessionScreen(mood) {
+                    navController.popBackStack() // Ends session and goes back to Home
+                }
             }
         }
     }
