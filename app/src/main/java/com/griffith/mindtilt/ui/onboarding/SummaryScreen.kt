@@ -121,7 +121,7 @@ fun SummaryScreen(username:String, onFinishClick: () -> Unit) {
                 Surface(
                     shape = RoundedCornerShape(28.dp),
                     tonalElevation = 12.dp,
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.22f),
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.18f),
                     modifier = Modifier
                         .padding(horizontal = 24.dp)
                         .fillMaxWidth()
