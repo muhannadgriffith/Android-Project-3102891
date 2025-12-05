@@ -3,11 +3,11 @@
 
 package com.griffith.mindtilt.ui.navigation
 
-
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.layout.padding
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -15,7 +15,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -34,6 +34,7 @@ fun MainScreenNavHost(username: String, navController: NavHostController) {
     val currentRoute = navBackStackEntry.value?.destination?.route
     // Scaffold to handle system insets
     Scaffold (
+        containerColor = Color.Transparent,
         // Bottom navigation bar with all defined items
         bottomBar = {
             NavigationBar (
@@ -56,12 +57,11 @@ fun MainScreenNavHost(username: String, navController: NavHostController) {
                 }
             }
         }
-    ) { innerPadding ->
+    ) { _ ->
         // Host for the main screen content depending on the selected tab
         NavHost(
             navController = navController,
-            startDestination = "home",
-            modifier = Modifier.padding(innerPadding)
+            startDestination = "home"
         ) {
 
             composable("home") {
@@ -82,8 +82,18 @@ fun MainScreenNavHost(username: String, navController: NavHostController) {
             // SessionScreen
             composable(
                 "session/{mood}",
-                enterTransition = { fadeIn(animationSpec = tween(500)) },
-                exitTransition = { fadeOut(animationSpec = tween(500)) }
+                enterTransition = {
+                    fadeIn(animationSpec = tween(600)) + slideInHorizontally(
+                        initialOffsetX = { it / 2 },
+                        animationSpec = tween(600)
+                    )
+                },
+                exitTransition = {
+                    fadeOut(animationSpec = tween(400)) + slideOutHorizontally(
+                        targetOffsetX = { it / 2 },
+                        animationSpec = tween(400)
+                    )
+                }
             ) { backStackEntry ->
                 val mood = backStackEntry.arguments?.getString("mood") ?: "Calm"
                 SessionScreen(mood) {
