@@ -132,7 +132,6 @@ fun SummaryScreen(username:String, onFinishClick: () -> Unit) {
                             text = "What our users experience after a few sessions:",
                             style = MaterialTheme.typography.titleLarge.copy(
                                 color = Color.White,
-                                fontWeight = FontWeight.Medium,
                                 letterSpacing = 0.3.sp,
                                 shadow = Shadow(
                                     color = Color.White.copy(alpha = 0.3f),
