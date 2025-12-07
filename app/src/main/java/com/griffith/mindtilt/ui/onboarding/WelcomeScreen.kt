@@ -194,44 +194,45 @@ fun WelcomeScreen(onNextClick: (String) -> Unit) {
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Gradient next button navigates to BenefitsScreen (onboarding screen 2)
-                Button(
-                    onClick = {
-                        if (isValidName(name)) onNextClick(name) else error = true
-                    },
+            }
+            // Gradient next button navigates to BenefitsScreen (onboarding screen 2)
+            Button(
+                onClick = {
+                    if (isValidName(name)) onNextClick(name) else error = true
+                },
+                modifier = Modifier
+                    .padding(bottom = 24.dp)
+                    .fillMaxWidth()
+                    .height(54.dp)
+                    .padding(horizontal = 24.dp)
+                    .align(Alignment.BottomCenter),
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                contentPadding = PaddingValues()
+            ) {
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp)
-                        .padding(horizontal = 24.dp),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                    contentPadding = PaddingValues()
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(54.dp)
-                            .background(
-                                brush = Brush.horizontalGradient(
-                                    listOf(
-                                        Color(0xFF8E7DFF),
-                                        Color(0xFFB295FF)
-                                    )
-                                ),
-                                shape = RoundedCornerShape(18.dp)
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                listOf(
+                                    Color(0xFF8E7DFF),
+                                    Color(0xFFB295FF)
+                                )
                             ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Next",
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                color = Color.White
-                            )
+                            shape = RoundedCornerShape(18.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Next",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            color = Color.White
                         )
-                    }
-                }
+                    )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                }
             }
         }
 
