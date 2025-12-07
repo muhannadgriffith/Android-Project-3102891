@@ -207,41 +207,42 @@ fun SummaryScreen(username:String, onFinishClick: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Final gradient CTA button navigates to HomeScreen
-                Button(
-                    onClick = onFinishClick,
+            }
+            // Final gradient CTA button navigates to HomeScreen
+            Button(
+                onClick = onFinishClick,
+                modifier = Modifier
+                    .padding(bottom = 24.dp)
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .height(54.dp)
+                    .padding(horizontal = 24.dp),
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                contentPadding = PaddingValues()
+            ) {
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp)
-                        .padding(horizontal = 24.dp),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                    contentPadding = PaddingValues()
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(54.dp)
-                            .background(
-                                brush = Brush.horizontalGradient(
-                                    listOf(
-                                        Color(0xFF8E7DFF),
-                                        Color(0xFFB295FF)
-                                    )
-                                ),
-                                shape = RoundedCornerShape(18.dp)
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                listOf(
+                                    Color(0xFF8E7DFF),
+                                    Color(0xFFB295FF)
+                                )
                             ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Get Started",
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                color = Color.White
-                            )
+                            shape = RoundedCornerShape(18.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Get Started",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            color = Color.White
                         )
-                    }
+                    )
                 }
-
             }
         }
     }
