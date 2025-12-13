@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -47,7 +48,7 @@ fun HomeScreen(
     val gradientColors = LocalGradients.current.primary
 
     // State to store the currently selected mood
-    var selectedMood by remember { mutableStateOf<String?>(null) }
+    var selectedMood by rememberSaveable { mutableStateOf<String?>(null) }
 
     // Scaffold to handle system insets
     Scaffold { innerPadding ->
@@ -128,7 +129,7 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                /// Button that navigates into the meditation session screen with selected mood
+                // Button that navigates into the meditation session screen with selected mood
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
