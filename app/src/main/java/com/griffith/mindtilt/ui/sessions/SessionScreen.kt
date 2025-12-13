@@ -3,15 +3,22 @@
 
 package com.griffith.mindtilt.ui.sessions
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -20,43 +27,57 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.griffith.mindtilt.ui.theme.LocalGradients
+import kotlinx.coroutines.delay
 
-// Map each mood to a placeholder frequency (in Hz) that will play during the session
-private val moodFrequencyMap = mapOf(
-    "Calm" to 528,
-    "Focus" to 432,
-    "Energized" to 639,
-    "Sleep" to 396
-)
 
 @Composable
 fun SessionScreen(
     mood: String,
+    sessionDurationSec: Int = 60,
     onEndSession: () -> Unit
 ) {
     val context = LocalContext.current
-    val gradientColors = LocalGradients.current.primary
-
+    // Manage ambient + isochronic tones during session
+    val audioManager = remember { SessionAudioManager(context) }
+    // Initialize accelerometer manager to track movement
+    val accelerometerManager = remember { AccelerometerManager(context) }
     // Track device movement (0 = still, 1 = very moving)
     var movement by remember { mutableFloatStateOf(0f) }
+    // Track elapsed session time to update progress bar
+    var elapsedTime by remember { mutableFloatStateOf(0f) }
 
-    // Initialize accelerometer manager
-    val accelerometerManager = remember { AccelerometerManager(context) }
+    val gradientColors = LocalGradients.current.primary
 
-    // Setup accelerometer callback and lifecycle
-    DisposableEffect(Unit) {
-        // Update movement whenever accelerometer detects motion
-        accelerometerManager.onMovementDetected = { movementLevel ->
-            movement = movementLevel
-        }
-        // Start listening to the accelerometer
+
+    // Start audio session, accelerometer, and increment elapsedTime in coroutine
+    LaunchedEffect(Unit) {
+        // Start the audio session (ambient + isochronic tones)
+        audioManager.startSession(mood, sessionDurationSec)
+        // Update movement state when the accelerometer detects motion
+        accelerometerManager.onMovementDetected = { movementLevel -> movement = movementLevel }
+        // Start listening to accelerometer updates
         accelerometerManager.start()
 
-        // Stop listening when this composable leaves the composition
-        onDispose {
-            accelerometerManager.stop()
+        // Update elapsed time every second to update progress bar
+        while (elapsedTime < sessionDurationSec) {
+            delay(1000L)
+            elapsedTime++
         }
     }
+
+    // Stop audio & accelerometer when composable leaves the screen
+    DisposableEffect(Unit) {
+        onDispose {
+            accelerometerManager.stop()
+            audioManager.stopSession()
+        }
+    }
+
+    // Smooth animation to update progress bar
+    val progress = animateFloatAsState(
+        targetValue = elapsedTime / sessionDurationSec.toFloat(),
+        animationSpec = tween(durationMillis = 300)
+    ).value
 
     // Scaffold to handle system insets
     Scaffold { innerPadding ->
@@ -66,161 +87,141 @@ fun SessionScreen(
                 .background(brush = Brush.verticalGradient(gradientColors))
                 .padding(innerPadding)
         ) {
-            // Main layout for session content
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Top
-            ) {
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Session title with subtle glow
-                Box(
-                    modifier = Modifier
-                        .size(120.dp)
-                        .background(
-                            brush = Brush.radialGradient(
-                                listOf(Color.White.copy(alpha = 0.08f), Color.Transparent)
-                            ),
-                            shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "$mood Session",
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.Medium,
-                            color = Color.White,
-                            letterSpacing = 0.5.sp
-                        ),
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Frequency info card
-                Surface(
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.2f),
-                    tonalElevation = 12.dp,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Playing Frequency",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                color = Color.White.copy(alpha = 0.8f),
-                                fontWeight = FontWeight.Medium
-                            )
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = "${moodFrequencyMap[mood]} Hz",
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 42.sp
-                            )
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Movement meter section
-                Text(
-                    text = "Movement Detected",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        color = Color.White,
-                        fontWeight = FontWeight.Medium
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Shows a visual bar that fills according to movement level
-                MovementMeter(movement)
-
-                // Show warning if moving too much
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Textual feedback to guide the user to stay still
-                val movementStatus = when {
-                    movement < 0.2f -> "Perfect - Stay still"
-                    movement < 0.5f -> "Small movements detected"
-                    else -> "Please remain still"
-                }
-
-                // Color code the movement feedback (green/amber/red)
-                val statusColor = when {
-                    movement < 0.2f -> Color(0xFF4CAF50)
-                    movement < 0.5f -> Color(0xFFFFC107)
-                    else -> Color(0xFFFF5252)
-                }
-
-                Text(
-                    text = movementStatus,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        color = statusColor,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(48.dp))
-
-                // End Session gradient button
-                Box(
+            Column (modifier = Modifier.fillMaxSize()) {
+                // Main layout for session content
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .shadow(
-                            elevation = 8.dp,
-                            shape = RoundedCornerShape(18.dp),
-                            spotColor = Color.Black.copy(alpha = 0.3f)
-                        )
+                        .verticalScroll(rememberScrollState())
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Button(
-                        onClick = onEndSession,
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    // Main card showing mood, wave visualizer, and session progress
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(54.dp)
-                            .border(
-                                width = 2.dp,
-                                color = Color.White.copy(alpha = 0.3f),
-                                shape = RoundedCornerShape(18.dp)
-                            ),
-                        shape = RoundedCornerShape(18.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                        contentPadding = PaddingValues()
+                            .padding(vertical = 16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.White.copy(alpha = 0.08f)
+                        ),
+                        shape = RoundedCornerShape(22.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
                     ) {
-                        Box(
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(32.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier.size(160.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .matchParentSize()
+                                        .blur(12.dp)
+                                        .background(
+                                            Color.White.copy(alpha = 0.08f),
+                                            CircleShape
+                                        )
+                                )
+                                Text(
+                                    text = mood,
+                                    style = MaterialTheme.typography.headlineMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                        letterSpacing = 0.5.sp
+                                    )
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(48.dp))
+                            // Progress bar to show session progress
+                            LinearProgressIndicator(
+                                progress = { progress },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp)
+                                    .height(10.dp)
+                                    .clip(RoundedCornerShape(50)),
+                                color = gradientColors.last(),
+                                trackColor = Color.White.copy(alpha = 0.25f),
+                                strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
+                            )
+
+                            Spacer(modifier = Modifier.height(32.dp))
+
+                            MeditationWaveVisualizer(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(120.dp),
+                                amplitude = 18f,
+                                waveCount = 6
+                            )
+                            Spacer(modifier = Modifier.height(32.dp))
+                            // Shows a visual bar that fills according to movement level
+                            MovementMeter(movementLevel = movement)
+
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(48.dp))
+
+                    // End Session gradient button
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 16.dp)
+                            .shadow(
+                                elevation = 8.dp,
+                                shape = RoundedCornerShape(18.dp),
+                                spotColor = Color.Black.copy(alpha = 0.3f)
+                            )
+                    ) {
+                        Button(
+                            onClick = onEndSession,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(54.dp)
-                                .background(
-                                    brush = Brush.horizontalGradient(
-                                        listOf(Color(0xFF8E7DFF), Color(0xFFB295FF))
-                                    ),
+                                .border(
+                                    width = 2.dp,
+                                    color = Color.White.copy(alpha = 0.3f),
                                     shape = RoundedCornerShape(18.dp)
                                 ),
-                            contentAlignment = Alignment.Center
+                            shape = RoundedCornerShape(18.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                            contentPadding = PaddingValues()
                         ) {
-                            Text(
-                                text = "End Session",
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    color = Color.White,
-                                    fontSize = 18.sp
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(54.dp)
+                                    .background(
+                                        brush = Brush.horizontalGradient(
+                                            listOf(Color(0xFF8E7DFF), Color(0xFFB295FF))
+                                        ),
+                                        shape = RoundedCornerShape(18.dp)
+                                    )
+                                    .border(
+                                        2.dp,
+                                        Color.White.copy(alpha = 0.25f),
+                                        RoundedCornerShape(18.dp)
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "End Session",
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        color = Color.White,
+                                        fontSize = 18.sp
+                                    )
                                 )
-                            )
+                            }
                         }
                     }
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
             }
         }
