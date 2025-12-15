@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "421713751368",
+    "project_id": "mindtilt-32bba",
+    "storage_bucket": "mindtilt-32bba.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:421713751368:android:24fa71074f75cc8fb5177d",
+        "android_client_info": {
+          "package_name": "com.griffith.mindtilt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgS576sWai8bL0G5i1EtgwgGWuqBaH_08"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
