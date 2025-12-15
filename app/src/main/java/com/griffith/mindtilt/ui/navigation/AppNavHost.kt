@@ -3,7 +3,6 @@
 
 package com.griffith.mindtilt.ui.navigation
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -16,19 +15,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.google.accompanist.navigation.animation.AnimatedNavHost
+import com.griffith.mindtilt.ui.auth.AuthViewModel
+import com.griffith.mindtilt.ui.auth.LoginScreen
+import com.griffith.mindtilt.ui.auth.RegisterScreen
 import com.griffith.mindtilt.ui.onboarding.BenefitsScreen
 import com.griffith.mindtilt.ui.onboarding.SummaryScreen
 import com.griffith.mindtilt.ui.onboarding.WelcomeScreen
 import com.griffith.mindtilt.ui.theme.LocalGradients
 
-@OptIn(ExperimentalAnimationApi::class)
+// Navigation host for the onboardings
 @Composable
 fun AppNavHost(
     navController: NavHostController,
-    startDestination: String = "welcome"
+    startDestination: String = "login",
+    vm: AuthViewModel
 ) {
     val gradient = LocalGradients.current.primary
 
@@ -37,82 +40,81 @@ fun AppNavHost(
             .fillMaxSize()
             .background(brush = Brush.verticalGradient(gradient))
     ) {
-        // AnimatedNavHost container to manage navigation between composables
-        // and animated transitions
-        AnimatedNavHost(
-            navController = navController,
-            startDestination = startDestination
-        ) {
+        NavHost(navController = navController, startDestination = startDestination) {
 
-            // Onboarding screen 1: welcome
-            composable(
-                "welcome",
-                enterTransition = { fadeIn(animationSpec = tween(durationMillis = 600)) },
-                exitTransition = { fadeOut(animationSpec = tween(durationMillis = 600)) }
-            ) {
-                // Pass lambda to handle "next" button
-                WelcomeScreen { username ->
-                    // Navigate to BenefitsScreen with the username
-                    navController.navigate("benefits/$username")
-                }
+            // Login screen, entry point
+            composable("login") {
+                LoginScreen(navController, vm)
             }
 
-            // Onboarding screen 2: benefits
-            composable(
-                "benefits/{username}",
-                enterTransition = {
-                    slideInHorizontally(initialOffsetX = { it }) +
-                            fadeIn(tween(300))
-                },
-                exitTransition = {
-                    slideOutHorizontally(targetOffsetX = { -it }) +
-                            fadeOut(tween(200))
-                }
-            ) { backStackEntry ->
-                // Extract the username from navigation argument
-                val username = backStackEntry.arguments?.getString("username") ?: ""
-                // Pass username to UI and a lambda to handle "next" button
-                BenefitsScreen(username) {
-                    // Navigate to SummaryScreen with the username
-                    navController.navigate("summary/$username")
-                }
+            // Register screen
+            composable("register") {
+                RegisterScreen(navController, vm)
             }
 
-            // Onboarding screen 3: summary
+            // WelcomeScreen first onboarding after login/register
             composable(
-                "summary/{username}",
-                enterTransition = {
-                    slideInHorizontally(initialOffsetX = { it }) +
-                            fadeIn(tween(300))
-                },
-                exitTransition = {
-                    slideOutHorizontally(targetOffsetX = { -it }) +
-                            fadeOut(tween(200))
-                }
+                "welcome/{uid}",
+                enterTransition = { fadeIn(animationSpec = tween(600)) },
+                exitTransition = { fadeOut(animationSpec = tween(600)) }
             ) { backStackEntry ->
-                // Extract the username from navigation argument
-                val username = backStackEntry.arguments?.getString("username") ?: ""
-                // Pass username to the UI and a lambda to handle "finish" button
-                SummaryScreen(username) {
-                    // Navigate to Home screen with the username
-                    navController.navigate("main/$username") {
-                        // Clear back stack so onboarding screens are removed
-                        popUpTo("welcome") { inclusive = true }
+                val uid = backStackEntry.arguments?.getString("uid") ?: ""
+                WelcomeScreen { name ->
+                    // Save the user name in Firestore before moving to next screen
+                    vm.setName(uid, name) { result ->
+                        result.onSuccess {
+                            navController.navigate("benefits/$uid/$name") {
+                                popUpTo("welcome") { inclusive = true }
+                            }
+                        }.onFailure { e ->
+                            println("Failed to save name: ${e.localizedMessage}")
+                        }
                     }
                 }
             }
 
-            // MainScreen after onboarding
+            // BenefitScreen (onboarding 2)
             composable(
-                "main/{username}",
-                enterTransition = { fadeIn(animationSpec = tween(durationMillis = 600)) },
-                exitTransition = { fadeOut(animationSpec = tween(durationMillis = 600)) }
+                "benefits/{uid}/{name}",
+                enterTransition = { slideInHorizontally(initialOffsetX = { it }) + fadeIn(tween(300)) },
+                exitTransition = { slideOutHorizontally(targetOffsetX = { -it }) + fadeOut(tween(200)) }
             ) { backStackEntry ->
-                val username = backStackEntry.arguments?.getString("username") ?: ""
+                val uid = backStackEntry.arguments?.getString("uid") ?: ""
+                val name = backStackEntry.arguments?.getString("name") ?: ""
+                BenefitsScreen(name) {
+                    navController.navigate("summary/$uid/$name") {
+                        popUpTo("benefits") { inclusive = true }
+                    }
+                }
+            }
+
+            // SummaryScreen (final onboarding), mark onboarding complete on finish
+            composable(
+                "summary/{uid}/{name}",
+                enterTransition = { slideInHorizontally(initialOffsetX = { it }) + fadeIn(tween(300)) },
+                exitTransition = { slideOutHorizontally(targetOffsetX = { -it }) + fadeOut(tween(200)) }
+            ) { backStackEntry ->
+                val uid = backStackEntry.arguments?.getString("uid") ?: ""
+                val name = backStackEntry.arguments?.getString("name") ?: ""
+                SummaryScreen(name) {
+                    vm.completeOnboarding(uid) {
+                        navController.navigate("main/$name") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    }
+                }
+            }
+
+            // Main screen after onboarding with its own navigation
+            composable(
+                "main/{name}",
+                enterTransition = { fadeIn(animationSpec = tween(600)) },
+                exitTransition = { fadeOut(animationSpec = tween(600)) }
+            ) { backStackEntry ->
+                val name = backStackEntry.arguments?.getString("name") ?: ""
                 val bottomNavController = rememberNavController()
-                MainScreenNavHost(username, bottomNavController)
+                MainScreenNavHost(name, bottomNavController)
             }
         }
     }
-
 }
