@@ -102,8 +102,8 @@ fun LoginScreen(
                             // Login with the credentials
                             authViewModel.login(email, password) { result ->
                                 result.onSuccess { uid ->
-                                    navController.navigate("welcome/$uid") {
-                                        popUpTo("login") { inclusive = true }
+                                    navController.navigate("login") {
+                                        popUpTo(0)
                                     }
                                 }
                                 result.onFailure { e ->
