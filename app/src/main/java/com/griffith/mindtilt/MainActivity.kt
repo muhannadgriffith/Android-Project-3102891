@@ -35,14 +35,16 @@ class MainActivity : ComponentActivity() {
                 var isCheckingAuth by remember { mutableStateOf(true) } // loading state
 
                 // check if user is already logged in
-                LaunchedEffect(Unit) {
+                LaunchedEffect(authViewModel.isLoggedIn)  {
                     val currentUser = FirebaseAuth.getInstance().currentUser
                     if (currentUser != null) {
                         authViewModel.getUserData(currentUser.uid) { result ->
                             startDestination = result.fold(
-                                onSuccess = { (_, onboarded) ->
-                                    // If user completed onboarding, go to main, otherwise welcome screen
-                                    if (onboarded) "main/${currentUser.uid}" else "welcome/${currentUser.uid}"
+                                onSuccess = { (name, onboarded) ->
+                                    if (onboarded)
+                                        "main/$name"
+                                    else
+                                        "welcome/${currentUser.uid}"
                                 },
                                 onFailure = { "login" } // Fallback
                             )
