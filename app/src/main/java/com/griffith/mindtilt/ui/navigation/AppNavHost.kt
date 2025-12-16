@@ -113,7 +113,12 @@ fun AppNavHost(
             ) { backStackEntry ->
                 val name = backStackEntry.arguments?.getString("name") ?: ""
                 val bottomNavController = rememberNavController()
-                MainScreenNavHost(name, bottomNavController)
+                MainScreenNavHost(
+                    name,
+                    bottomNavController,
+                    navController,
+                    vm
+                )
             }
         }
     }
