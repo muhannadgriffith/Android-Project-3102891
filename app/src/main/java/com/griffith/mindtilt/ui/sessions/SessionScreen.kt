@@ -34,7 +34,8 @@ import kotlinx.coroutines.delay
 fun SessionScreen(
     mood: String,
     sessionDurationSec: Int = 60,
-    onEndSession: () -> Unit
+    onEndSession: () -> Unit,
+    onSessionFinished: () -> Unit
 ) {
     val context = LocalContext.current
     // Manage ambient + isochronic tones during session
@@ -63,6 +64,7 @@ fun SessionScreen(
             delay(1000L)
             elapsedTime++
         }
+        onSessionFinished()
     }
 
     // Stop audio & accelerometer when composable leaves the screen
