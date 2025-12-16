@@ -3,7 +3,6 @@
 
 package com.griffith.mindtilt.ui.home
 
-import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -93,7 +91,7 @@ fun HomeScreen(
                     columns = GridCells.Fixed(2),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.fillMaxWidth().weight(1f)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     // Loop through moods and display each as a clickable Box
                     items(moods) { mood ->
@@ -181,22 +179,6 @@ fun HomeScreen(
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
-                // Save the current context
-                val context = LocalContext.current
-                // Implicit intent to share progress (This will be moved in later milestone to be displayed after user finishes a session)
-                Button(
-                    onClick = {
-                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_SUBJECT, "MindTilt Meditation")
-                            putExtra(Intent.EXTRA_TEXT, "I just finished a meditation session with MindTilt")
-                        }
-                        context.startActivity(Intent.createChooser(shareIntent, "Share via"))
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Share Progress")
-                }
             }
 
         }
