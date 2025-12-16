@@ -3,6 +3,9 @@
 
 package com.griffith.mindtilt.ui.auth
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
@@ -20,6 +23,9 @@ import kotlinx.coroutines.tasks.await
 class AuthViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
     private val db = Firebase.firestore
+
+    var isLoggedIn by mutableStateOf(auth.currentUser != null)
+        private set
 
     // Register user with email + password
     fun register(email: String, password: String, onResult: (Result<String>) -> Unit) {
@@ -55,6 +61,7 @@ class AuthViewModel : ViewModel() {
             try {
                 val result = auth.signInWithEmailAndPassword(email, password).await()
                 val uid = result.user?.uid ?: throw Exception("UID is null")
+                isLoggedIn = true
                 onResult(Result.success(uid))
             } catch (e: Exception) {
                 val message = when (e) { // Handle different exceptions
@@ -105,8 +112,72 @@ class AuthViewModel : ViewModel() {
         }
     }
 
+    // Save session with mood and note
+    fun saveSession(
+        uid: String,
+        mood: String,
+        note: String,
+        onResult: (Result<Unit>) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val sessionData = mapOf(
+                    "mood" to mood,
+                    "note" to note,
+                    "timestamp" to System.currentTimeMillis()
+                )
+                db.collection("users")
+                    .document(uid)
+                    .collection("sessions")
+                    .add(sessionData)
+                    .await()
+                onResult(Result.success(Unit))
+            } catch (e: Exception) {
+                onResult(
+                    Result.failure(
+                        Exception("Failed to save session. Please try again")
+                    )
+                )
+            }
+        }
+    }
+
+    // Get user's sessions
+    fun getSessions(uid: String, onResult: (Result<List<Session>>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val snapshot = db.collection("users")
+                    .document(uid)
+                    .collection("sessions")
+                    .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                    .get()
+                    .await()
+                val sessions = snapshot.documents.map { doc ->
+                    Session(
+                        id = doc.id,
+                        mood = doc.getString("mood") ?: "",
+                        note = doc.getString("note") ?: "",
+                        timestamp = doc.getLong("timestamp") ?: 0L
+                    )
+                }
+                onResult(Result.success(sessions))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
+
+    // Data class for a session
+    data class Session(
+        val id: String,
+        val mood: String,
+        val note: String,
+        val timestamp: Long
+    )
+
     // Logout
     fun logout() {
         auth.signOut()
+        isLoggedIn = false
     }
 }
