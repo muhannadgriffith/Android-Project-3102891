@@ -20,14 +20,21 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.griffith.mindtilt.ui.auth.AuthViewModel
 import com.griffith.mindtilt.ui.history.HistoryScreen
 import com.griffith.mindtilt.ui.home.HomeScreen
+import com.griffith.mindtilt.ui.sessions.SaveSessionScreen
 import com.griffith.mindtilt.ui.sessions.SessionScreen
 import com.griffith.mindtilt.ui.settings.SettingsScreen
 
 // Hosts the main bottom navigation and switches between home, history, and settings screens
 @Composable
-fun MainScreenNavHost(username: String, navController: NavHostController) {
+fun MainScreenNavHost(
+    username: String,
+    navController: NavHostController,
+    parentNavController: NavHostController,
+    vm: AuthViewModel
+) {
 
     // Observe the current route to highlight the selected navigation item
     val navBackStackEntry = navController.currentBackStackEntryAsState()
@@ -65,18 +72,19 @@ fun MainScreenNavHost(username: String, navController: NavHostController) {
         ) {
 
             composable("home") {
-                HomeScreen(
-                    username = username,
-                    navController = navController
-                )
+                HomeScreen(username = username, navController = navController)
             }
 
             composable("history") {
-                HistoryScreen()
+                HistoryScreen(authViewModel = vm)
             }
 
             composable("settings") {
-                SettingsScreen()
+                SettingsScreen(authViewModel = vm) {
+                    parentNavController.navigate("login") {
+                        popUpTo("home") { inclusive = true }
+                    }
+                }
             }
 
             // SessionScreen
@@ -96,10 +104,31 @@ fun MainScreenNavHost(username: String, navController: NavHostController) {
                 }
             ) { backStackEntry ->
                 val mood = backStackEntry.arguments?.getString("mood") ?: "Calm"
-                SessionScreen(mood) {
-                    navController.popBackStack() // Ends session and goes back to Home
+                SessionScreen(
+                    mood = mood,
+                    onEndSession = {
+                        navController.popBackStack() // users end without saving
+                    },
+                    onSessionFinished = {
+                        navController.navigate("saveSession/$mood") // Navigate after session ends
+                    }
+                )
+            }
+
+            // SaveSessionScreen
+            composable("saveSession/{mood}") { backStackEntry ->
+                val mood = backStackEntry.arguments?.getString("mood") ?: "Calm"
+                SaveSessionScreen(
+                    mood = mood,
+                    authViewModel = vm
+                ) {
+                    // Go back to Home after saving
+                    navController.popBackStack("home", inclusive = false)
                 }
             }
+
+
+
         }
     }
 }
